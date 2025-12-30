@@ -1,0 +1,28 @@
+name: Test Config Secret
+
+on:
+  workflow_dispatch:  # Manual trigger only
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Create config from secret
+        run: |
+          mkdir -p config
+          echo "${{ secrets.CONFIG_YAML }}" > config/config.yaml
+
+      - name: Verify config file
+        run: |
+          echo "=== Config file exists ==="
+          ls -la config/
+          echo ""
+          echo "=== Line count ==="
+          wc -l config/config.yaml
+          echo ""
+          echo "=== First 5 lines (safe to show) ==="
+          head -5 config/config.yaml
