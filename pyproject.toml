@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "research-paper-notifier"
+version = "0.1.0"
+description = "Automated research paper notification system"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "httpx>=0.25.0",
+    "anthropic>=0.18.0",
+    "pyyaml>=6.0",
+]
+
+[project.scripts]
+research-notify = "src.main:main"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+]

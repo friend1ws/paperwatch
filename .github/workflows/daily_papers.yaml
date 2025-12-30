@@ -1,0 +1,39 @@
+name: Daily Paper Notification
+
+on:
+  schedule:
+    # Run at 9:00 AM JST (0:00 UTC) every day
+    - cron: '0 0 * * *'
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run paper notification
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          PUBMED_API_KEY: ${{ secrets.PUBMED_API_KEY }}  # Optional
+        run: |
+          python -m src.main
+
+      - name: Report status
+        if: failure()
+        run: |
+          echo "Paper notification failed. Check the logs for details."
