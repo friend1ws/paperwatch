@@ -214,6 +214,68 @@ For daily notifications, set up a cron job or scheduled task:
 0 9 * * * cd /path/to/workspace && USE_BEDROCK=1 SLACK_BOT_TOKEN=xoxb-xxx /path/to/venv/bin/python -m src.main -c config/config.yaml
 ```
 
+## GitHub Actions Setup
+
+You can run this tool automatically using GitHub Actions.
+
+### 1. Fork or clone this repository
+
+### 2. Set up GitHub Secrets
+
+Go to your repository's **Settings** → **Secrets and variables** → **Actions** → **New repository secret**
+
+Add the following secrets:
+
+| Secret Name | Description | Required |
+|-------------|-------------|----------|
+| `CONFIG_YAML` | Contents of your `config/config.yaml` file | ✓ |
+| `USE_BEDROCK` | Set to `1` to use AWS Bedrock | ✓ |
+| `AWS_ACCESS_KEY_ID` | AWS Access Key ID | ✓ |
+| `AWS_SECRET_ACCESS_KEY` | AWS Secret Access Key | ✓ |
+| `AWS_REGION` | AWS Region (e.g., `us-east-1`) | ✓ |
+| `SLACK_BOT_TOKEN` | Slack Bot Token (`xoxb-...`) | ✓ |
+| `PUBMED_API_KEY` | PubMed API Key (increases rate limit) | Optional |
+
+### 3. CONFIG_YAML Secret
+
+Copy the entire contents of your `config/config.yaml` file and paste it as the value for the `CONFIG_YAML` secret. You can paste the YAML as-is (no encoding needed).
+
+Example:
+```yaml
+journals:
+  pubmed:
+    - Nature
+    - Science
+  preprint:
+    - bioRxiv
+
+keywords:
+  topics:
+    - long-read
+    - pangenome
+  authors:
+    - Evan Eichler
+
+search:
+  days_back: 1
+
+slack:
+  channel: "#your-channel"
+
+schedule:
+  time: "09:00"
+  timezone: "Asia/Tokyo"
+```
+
+### 4. Run the workflow
+
+The workflow runs automatically at 9:00 AM JST (0:00 UTC) daily.
+
+To run manually:
+1. Go to **Actions** tab
+2. Select **Daily Paper Notification**
+3. Click **Run workflow**
+
 ## License
 
 MIT

@@ -25,10 +25,18 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Create config from secret
+        run: |
+          mkdir -p config
+          echo "${{ secrets.CONFIG_YAML }}" > config/config.yaml
+
       - name: Run paper notification
         env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          USE_BEDROCK: ${{ secrets.USE_BEDROCK }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
           PUBMED_API_KEY: ${{ secrets.PUBMED_API_KEY }}  # Optional
         run: |
           python -m src.main
