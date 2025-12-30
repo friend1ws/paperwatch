@@ -13,7 +13,7 @@ A tool to automatically fetch, filter, summarize, and notify about new research 
 
 ## Requirements
 
-- Python 3.12+
+- Python 3.11+
 - AWS credentials (for Bedrock) or Anthropic API key
 - Slack Bot Token
 
@@ -70,7 +70,8 @@ search:
   days_back: 1  # Number of days to search (1 = yesterday only)
 
 slack:
-  channel: "#your-channel"
+  # Use channel ID instead of channel name (e.g., "C01234ABCDE")
+  channel: "YOUR_CHANNEL_ID"
 
 schedule:
   time: "09:00"
@@ -260,7 +261,8 @@ search:
   days_back: 1
 
 slack:
-  channel: "#your-channel"
+  # Use channel ID instead of channel name (e.g., "C01234ABCDE")
+  channel: "YOUR_CHANNEL_ID"
 
 schedule:
   time: "09:00"
