@@ -21,7 +21,8 @@ A tool to automatically fetch, filter, summarize, and notify about new research 
 
 ```bash
 # Clone the repository
-cd workspace
+git clone https://github.com/friend1ws/paperwatch.git
+cd paperwatch
 
 # Create virtual environment
 python -m venv venv
@@ -158,21 +159,25 @@ Done!
 ## Project Structure
 
 ```
-workspace/
+paperwatch/
+├── .github/
+│   └── workflows/
+│       └── daily_papers.yaml  # GitHub Actions workflow
 ├── config/
-│   └── config.yaml          # Configuration file
+│   └── config.yaml            # Configuration file (gitignored)
 ├── src/
 │   ├── __init__.py
-│   ├── main.py              # Main entry point
-│   ├── config.py            # Configuration loader
+│   ├── main.py                # Main entry point
+│   ├── config.py              # Configuration loader
 │   ├── fetchers/
 │   │   ├── __init__.py
-│   │   ├── pubmed.py        # PubMed fetcher
-│   │   └── biorxiv.py       # bioRxiv/medRxiv fetcher
-│   ├── filter_embedding.py  # Paper filtering with embeddings
-│   ├── summarizer.py        # Claude summarization
-│   └── notifier.py          # Slack notification
+│   │   ├── pubmed.py          # PubMed fetcher
+│   │   └── biorxiv.py         # bioRxiv/medRxiv fetcher
+│   ├── filter_embedding.py    # Paper filtering with embeddings
+│   ├── summarizer.py          # Claude summarization
+│   └── notifier.py            # Slack notification
 ├── requirements.txt
+├── pyproject.toml
 └── README.md
 ```
 
