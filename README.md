@@ -217,7 +217,7 @@ For daily notifications, set up a cron job or scheduled task:
 
 ```bash
 # Example crontab entry (run at 9:00 AM JST daily)
-0 9 * * * cd /path/to/workspace && USE_BEDROCK=1 SLACK_BOT_TOKEN=xoxb-xxx /path/to/venv/bin/python -m src.main -c config/config.yaml
+0 9 * * * cd /path/to/paperwatch && USE_BEDROCK=1 SLACK_BOT_TOKEN=xoxb-xxx /path/to/paperwatch/venv/bin/python -m src.main
 ```
 
 ## GitHub Actions Setup
