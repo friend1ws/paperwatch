@@ -9,6 +9,7 @@ from .config import load_config, Config
 from .fetchers import PubMedFetcher, BioRxivFetcher
 from .fetchers.pubmed import Paper
 from .filter_embedding import filter_papers_by_embedding
+from .history import NotificationHistory
 from .summarizer import summarize_papers
 from .notifier import send_to_slack
 
@@ -51,12 +52,17 @@ def fetch_all_papers(config: Config) -> list[Paper]:
     return all_papers
 
 
-def run(config_path: str = None, dry_run: bool = False) -> int:
+def run(
+    config_path: str = None,
+    dry_run: bool = False,
+    history_file: str = "notified_papers.json",
+) -> int:
     """Run the paper notification pipeline.
 
     Args:
         config_path: Path to config file (optional).
         dry_run: If True, don't send to Slack, just print results.
+        history_file: Path to file tracking notified papers.
 
     Returns:
         Exit code (0 for success).
@@ -89,6 +95,11 @@ def run(config_path: str = None, dry_run: bool = False) -> int:
     print(f"  Authors: {', '.join(config.keywords.authors)}")
     print(f"  Days back: {config.search.days_back}")
 
+    # Load notification history
+    history = NotificationHistory(history_file)
+    history.cleanup_old(days=90)  # Remove entries older than 90 days
+    print(f"  History: {len(history.notified)} papers already notified")
+
     # Fetch papers
     print("\n[2/5] Fetching papers...")
     papers = fetch_all_papers(config)
@@ -102,6 +113,13 @@ def run(config_path: str = None, dry_run: bool = False) -> int:
     print("\n[3/5] Filtering papers...")
     filtered = filter_papers_by_embedding(papers, config.keywords)
     print(f"  Matched papers: {len(filtered)}")
+
+    # Filter out already notified papers
+    new_papers = [r for r in filtered if not history.is_notified(r.paper.pmid)]
+    skipped = len(filtered) - len(new_papers)
+    if skipped > 0:
+        print(f"  Skipped {skipped} already notified papers")
+    filtered = new_papers
 
     if not filtered:
         print("\nNo papers matched the filters. Exiting.")
@@ -158,6 +176,10 @@ def run(config_path: str = None, dry_run: bool = False) -> int:
         )
         if success:
             print("  Successfully sent to Slack!")
+            # Mark papers as notified and save history
+            history.mark_notified([p.paper.pmid for p in summarized])
+            history.save()
+            print(f"  Updated history ({len(history.notified)} total papers)")
         else:
             print("  ERROR: Failed to send to Slack")
             return 1
@@ -186,10 +208,20 @@ def main():
         action="store_true",
         help="Don't send to Slack, just print results",
     )
+    parser.add_argument(
+        "--history-file",
+        type=str,
+        default="notified_papers.json",
+        help="Path to file tracking notified papers (default: notified_papers.json)",
+    )
 
     args = parser.parse_args()
 
-    sys.exit(run(config_path=args.config, dry_run=args.dry_run))
+    sys.exit(run(
+        config_path=args.config,
+        dry_run=args.dry_run,
+        history_file=args.history_file,
+    ))
 
 
 if __name__ == "__main__":
