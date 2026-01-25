@@ -63,11 +63,10 @@ Explain the research background and motivation in 2-3 sentences. Include why thi
 List 3-5 main results and discoveries as bullet points. Include specific numbers and statistics if available.
 
 ## Conclusions
-Summarize the research conclusions and significance in 2-3 sentences.
+Summarize the research conclusions and significance.
 
 ## Impact & Perspectives (by Claude)
-Claude's brief analysis (5-8 sentences total, covering key points):
-- Author expertise and research group characteristics
+Claude's brief analysis:
 - Novelty compared to related work
 - Scientific/social impact potential
 - Future directions
@@ -86,11 +85,10 @@ Claude's brief analysis (5-8 sentences total, covering key points):
 研究の主な結果と発見を箇条書きで3-5点挙げてください。具体的な数値や統計があれば含めてください。
 
 ## 結論
-研究の結論と意義を2-3文でまとめてください。
+研究の結論と意義をまとめてください。
 
 ## インパクト・展望（Claudeによる）
-Claudeによる簡潔な分析（合計5-8文で以下をカバー）：
-- 著者らの専門性と研究グループの特徴
+Claudeによる簡潔な分析：
 - 関連研究と比較した新規性
 - 科学的・社会的インパクトの可能性
 - 今後の展望
