@@ -1,5 +1,6 @@
 """Slack notification module using Slack SDK."""
 
+import time
 from datetime import datetime
 
 from slack_sdk import WebClient
@@ -176,25 +177,38 @@ class SlackNotifier:
 
         return True
 
-    def _send_blocks(self, blocks: list[dict]) -> bool:
-        """Send blocks to Slack.
+    def _send_blocks(self, blocks: list[dict], max_retries: int = 3) -> bool:
+        """Send blocks to Slack with rate limit handling.
 
         Args:
             blocks: List of Slack blocks to send.
+            max_retries: Maximum number of retries for rate limiting.
 
         Returns:
             True if successful.
         """
-        try:
-            self.client.chat_postMessage(
-                channel=self.channel,
-                blocks=blocks,
-                text="論文ピックアップ",  # Fallback text for notifications
-            )
-            return True
-        except SlackApiError as e:
-            print(f"Error sending to Slack: {e.response['error']}")
-            return False
+        for attempt in range(max_retries):
+            try:
+                self.client.chat_postMessage(
+                    channel=self.channel,
+                    blocks=blocks,
+                    text="論文ピックアップ",  # Fallback text for notifications
+                )
+                # Add delay between messages to avoid rate limiting
+                time.sleep(1.5)
+                return True
+            except SlackApiError as e:
+                error = e.response['error']
+                if error == 'ratelimited':
+                    # Get retry-after header, default to 5 seconds
+                    retry_after = int(e.response.headers.get('Retry-After', 5))
+                    print(f"Rate limited. Waiting {retry_after} seconds...")
+                    time.sleep(retry_after)
+                else:
+                    print(f"Error sending to Slack: {error}")
+                    return False
+        print("Max retries exceeded for rate limiting")
+        return False
 
 
 def send_to_slack(
