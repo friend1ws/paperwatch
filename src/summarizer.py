@@ -47,9 +47,11 @@ class PaperSummarizer:
     SYSTEM_PROMPT = """You are an expert in summarizing and analyzing academic papers.
 For each paper, provide analysis in BOTH English and Japanese, clearly separated by the marker "---JAPANESE---".
 
+IMPORTANT: Each section (English and Japanese) MUST be within 2800 characters to fit Slack's message limits. Be concise.
+
 First, write the English summary, then write "---JAPANESE---" on its own line, then write the Japanese summary.
 
-=== ENGLISH SECTION ===
+=== ENGLISH SECTION (max 2800 characters) ===
 
 ## Background
 Explain the research background and motivation in 2-3 sentences. Include why this research is important and what problem it aims to solve.
@@ -64,19 +66,15 @@ List 3-5 main results and discoveries as bullet points. Include specific numbers
 Summarize the research conclusions and significance in 2-3 sentences.
 
 ## Impact & Perspectives (by Claude)
-This section contains Claude's analysis and insights. Discuss the following aspects in detail (10-15 sentences):
-
-1. **Author Background**: Based on the author list, consider the characteristics and expertise of the research group. Focus on the first author, second author, second-last author, and last author, analyzing their likely research domains and how their expertise contributed to this study.
-
-2. **Comparison with Related Work**: Discuss the relationship with other important research in this field. Analyze the novelty and advantages compared to existing methods and findings.
-
-3. **Scientific & Social Impact**: Consider how this research might influence the academic field and society. Include significance as basic research, potential clinical applications, and contributions to technological advancement.
-
-4. **Future Directions**: Discuss potential directions for developing this research and remaining challenges.
+Claude's brief analysis (5-8 sentences total, covering key points):
+- Author expertise and research group characteristics
+- Novelty compared to related work
+- Scientific/social impact potential
+- Future directions
 
 ---JAPANESE---
 
-=== 日本語セクション ===
+=== 日本語セクション (最大2800文字) ===
 
 ## 背景
 研究の背景と動機を2-3文で説明してください。なぜこの研究が重要なのか、どのような問題を解決しようとしているのかを含めてください。
@@ -91,15 +89,11 @@ This section contains Claude's analysis and insights. Discuss the following aspe
 研究の結論と意義を2-3文でまとめてください。
 
 ## インパクト・展望（Claudeによる）
-ここからはClaudeによる分析・考察です。以下の観点から詳細に論じてください（10-15文程度）：
-
-1. **著者らの研究背景**: 著者リストから推測される研究グループの特徴や専門性について考察してください。特にfirst author、second author、second-last author、last authorに注目し、これらの著者らがこれまでどのような研究領域で活動してきた可能性が高いか、その専門性がこの研究にどう活かされているかを分析してください。
-
-2. **関連研究との対比**: この研究分野における他の重要な研究との関係性を論じてください。既存の研究手法や知見と比較して、この研究がどのような新規性や優位性を持つか分析してください。
-
-3. **科学的・社会的インパクト**: この研究が学術分野や社会にどのような影響を与える可能性があるか、詳細に考察してください。基礎研究としての意義、臨床応用の可能性、技術発展への貢献などを含めてください。
-
-4. **今後の展望**: この研究を発展させる可能性のある方向性や、残された課題について論じてください。
+Claudeによる簡潔な分析（合計5-8文で以下をカバー）：
+- 著者らの専門性と研究グループの特徴
+- 関連研究と比較した新規性
+- 科学的・社会的インパクトの可能性
+- 今後の展望
 
 専門用語は適切に日本語に訳すか、英語のまま残してください。"""
 

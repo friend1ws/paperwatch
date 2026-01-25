@@ -140,36 +140,34 @@ class SlackNotifier:
     ) -> bool:
         """Send papers to Slack.
 
+        Each paper is sent as a separate message to avoid Slack's text limits.
+
         Args:
             papers: List of summarized papers to send.
             send_if_empty: If True, send message even if no papers found.
 
         Returns:
-            True if message was sent successfully.
+            True if all messages were sent successfully.
         """
         if not papers and not send_if_empty:
             return True
 
         if not papers:
             blocks = self._create_no_papers_message()
-        else:
-            blocks = self._create_header_block(len(papers))
-            for paper in papers:
-                blocks.extend(self._format_paper_block(paper))
-
-        # Slack has a limit of 50 blocks per message
-        # If we have more, we need to split into multiple messages
-        max_blocks = 50
-        if len(blocks) > max_blocks:
-            # Send in batches
-            for i in range(0, len(blocks), max_blocks):
-                batch = blocks[i : i + max_blocks]
-                success = self._send_blocks(batch)
-                if not success:
-                    return False
-            return True
-        else:
             return self._send_blocks(blocks)
+
+        # Send header message first
+        header_blocks = self._create_header_block(len(papers))
+        if not self._send_blocks(header_blocks):
+            return False
+
+        # Send each paper as a separate message to avoid text length limits
+        for paper in papers:
+            paper_blocks = self._format_paper_block(paper)
+            if not self._send_blocks(paper_blocks):
+                return False
+
+        return True
 
     def _send_blocks(self, blocks: list[dict]) -> bool:
         """Send blocks to Slack.
