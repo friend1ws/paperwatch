@@ -129,6 +129,7 @@ def run(config_path: str = None, dry_run: bool = False) -> int:
         summarized = [
             SummarizedPaper(
                 paper=r.paper,
+                summary_en="(Dry run: summary not generated)",
                 summary_ja="(ドライラン: 要約は生成されません)",
                 match_reason=r.match_reason,
             )
@@ -147,7 +148,8 @@ def run(config_path: str = None, dry_run: bool = False) -> int:
             print(f"  Title: {paper.paper.title}")
             print(f"  URL: {paper.paper.url}")
             print(f"  Match: {paper.match_reason}")
-            print(f"  Summary: {paper.summary_ja[:100]}...")
+            print(f"  Summary (EN): {paper.summary_en[:100]}...")
+            print(f"  要約 (JA): {paper.summary_ja[:100]}...")
     else:
         success = send_to_slack(
             summarized,

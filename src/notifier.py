@@ -64,7 +64,14 @@ class SlackNotifier:
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": f"📝 *要約:*\n{paper.summary_ja}",
+                    "text": f"📝 *Summary (EN):*\n{paper.summary_en}",
+                },
+            },
+            {
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": f"📝 *要約 (JA):*\n{paper.summary_ja}",
                 },
             },
             {"type": "divider"},
