@@ -21,14 +21,14 @@ class SlackNotifier:
         self.client = WebClient(token=token)
         self.channel = channel
 
-    def _format_paper_block(self, paper: SummarizedPaper) -> list[dict]:
-        """Format a paper as Slack blocks.
+    def _format_paper_blocks(self, paper: SummarizedPaper) -> tuple[list[dict], list[dict]]:
+        """Format a paper as two sets of Slack blocks (EN and JA).
 
         Args:
             paper: SummarizedPaper to format.
 
         Returns:
-            List of Slack block elements.
+            Tuple of (English blocks, Japanese blocks).
         """
         # Truncate authors list for display
         authors = paper.paper.authors[:3]
@@ -36,7 +36,8 @@ class SlackNotifier:
         if len(paper.paper.authors) > 3:
             authors_str += f" et al. ({len(paper.paper.authors)} authors)"
 
-        blocks = [
+        # English summary blocks (includes paper metadata)
+        blocks_en = [
             {
                 "type": "section",
                 "text": {
@@ -67,6 +68,10 @@ class SlackNotifier:
                     "text": f"📝 *Summary (EN):*\n{paper.summary_en}",
                 },
             },
+        ]
+
+        # Japanese summary blocks
+        blocks_ja = [
             {
                 "type": "section",
                 "text": {
@@ -77,7 +82,7 @@ class SlackNotifier:
             {"type": "divider"},
         ]
 
-        return blocks
+        return blocks_en, blocks_ja
 
     def _create_header_block(self, paper_count: int) -> list[dict]:
         """Create header block for the notification.
@@ -161,10 +166,12 @@ class SlackNotifier:
         if not self._send_blocks(header_blocks):
             return False
 
-        # Send each paper as a separate message to avoid text length limits
+        # Send each paper as separate messages (EN and JA) to avoid text length limits
         for paper in papers:
-            paper_blocks = self._format_paper_block(paper)
-            if not self._send_blocks(paper_blocks):
+            blocks_en, blocks_ja = self._format_paper_blocks(paper)
+            if not self._send_blocks(blocks_en):
+                return False
+            if not self._send_blocks(blocks_ja):
                 return False
 
         return True
