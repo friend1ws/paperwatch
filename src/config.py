@@ -36,20 +36,12 @@ class SlackConfig:
 
 
 @dataclass
-class ScheduleConfig:
-    """Schedule configuration."""
-    time: str = "09:00"
-    timezone: str = "Asia/Tokyo"
-
-
-@dataclass
 class Config:
     """Main configuration class."""
     journals: JournalsConfig
     keywords: KeywordsConfig
     search: SearchConfig
     slack: SlackConfig
-    schedule: ScheduleConfig
 
     # API keys (loaded from environment)
     anthropic_api_key: Optional[str] = None
@@ -102,13 +94,6 @@ def load_config(config_path: Optional[str] = None) -> Config:
         channel=slack_data.get("channel", "#research-papers"),
     )
 
-    # Parse schedule config
-    schedule_data = data.get("schedule", {})
-    schedule = ScheduleConfig(
-        time=schedule_data.get("time", "09:00"),
-        timezone=schedule_data.get("timezone", "Asia/Tokyo"),
-    )
-
     # Load API keys from environment variables
     anthropic_api_key = os.environ.get("ANTHROPIC_API_KEY")
     slack_bot_token = os.environ.get("SLACK_BOT_TOKEN")
@@ -119,7 +104,6 @@ def load_config(config_path: Optional[str] = None) -> Config:
         keywords=keywords,
         search=search,
         slack=slack,
-        schedule=schedule,
         anthropic_api_key=anthropic_api_key,
         slack_bot_token=slack_bot_token,
         pubmed_api_key=pubmed_api_key,

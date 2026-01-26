@@ -2,8 +2,8 @@ name: Daily Paper Notification
 
 on:
   schedule:
-    # Run at 9:00 AM JST (0:00 UTC) every day
-    - cron: '0 0 * * *'
+    # Run at 7:00 AM JST (22:00 UTC previous day) every day
+    - cron: '0 22 * * *'
   workflow_dispatch:  # Allow manual trigger
 
 permissions:

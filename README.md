@@ -73,10 +73,6 @@ search:
 slack:
   # Use channel ID instead of channel name (e.g., "C01234ABCDE")
   channel: "YOUR_CHANNEL_ID"
-
-schedule:
-  time: "09:00"
-  timezone: "Asia/Tokyo"
 ```
 
 ### 2. Set environment variables
@@ -216,8 +212,8 @@ Handles various name formats:
 For daily notifications, set up a cron job or scheduled task:
 
 ```bash
-# Example crontab entry (run at 9:00 AM JST daily)
-0 9 * * * cd /path/to/paperwatch && USE_BEDROCK=1 SLACK_BOT_TOKEN=xoxb-xxx /path/to/paperwatch/venv/bin/python -m src.main
+# Example crontab entry (run at 7:00 AM JST daily, using UTC)
+0 22 * * * cd /path/to/paperwatch && USE_BEDROCK=1 SLACK_BOT_TOKEN=xoxb-xxx /path/to/paperwatch/venv/bin/python -m src.main
 ```
 
 ## GitHub Actions Setup
@@ -268,15 +264,11 @@ search:
 slack:
   # Use channel ID instead of channel name (e.g., "C01234ABCDE")
   channel: "YOUR_CHANNEL_ID"
-
-schedule:
-  time: "09:00"
-  timezone: "Asia/Tokyo"
 ```
 
 ### 4. Run the workflow
 
-The workflow runs automatically at 9:00 AM JST (0:00 UTC) daily.
+The workflow runs automatically at 7:00 AM JST (22:00 UTC previous day) daily.
 
 To run manually:
 1. Go to **Actions** tab
