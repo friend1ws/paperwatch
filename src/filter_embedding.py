@@ -161,20 +161,21 @@ class EmbeddingPaperFilter:
         # Check topics using embedding similarity
         # Calculate separately for title and abstract, take max score
         if self.topic_embeddings is not None:
-            title_embedding = self.model.encode(paper.title, convert_to_tensor=True)
-            title_similarities = util.cos_sim(title_embedding, self.topic_embeddings)[0]
+            similarities = []
+            if isinstance(paper.title, str) and paper.title:
+                title_embedding = self.model.encode(paper.title, convert_to_tensor=True)
+                similarities.append(util.cos_sim(title_embedding, self.topic_embeddings)[0])
 
-            abstract_embedding = self.model.encode(paper.abstract, convert_to_tensor=True)
-            abstract_similarities = util.cos_sim(abstract_embedding, self.topic_embeddings)[0]
+            if isinstance(paper.abstract, str) and paper.abstract:
+                abstract_embedding = self.model.encode(paper.abstract, convert_to_tensor=True)
+                similarities.append(util.cos_sim(abstract_embedding, self.topic_embeddings)[0])
 
-            for i, topic in enumerate(self.topics):
-                # Take the maximum score between title and abstract
-                title_score = float(title_similarities[i])
-                abstract_score = float(abstract_similarities[i])
-                score = max(title_score, abstract_score)
-                topic_scores[topic] = score
-                if score >= self.similarity_threshold:
-                    matched_topics.append(topic)
+            if similarities:
+                for i, topic in enumerate(self.topics):
+                    score = max(float(sim[i]) for sim in similarities)
+                    topic_scores[topic] = score
+                    if score >= self.similarity_threshold:
+                        matched_topics.append(topic)
 
         # Check authors (use normalized ASCII for comparison)
         # Extract (firstname, lastname) pairs from paper authors
