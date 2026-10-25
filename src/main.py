@@ -9,8 +9,9 @@ from .config import load_config, Config
 from .fetchers import PubMedFetcher, BioRxivFetcher
 from .fetchers.pubmed import Paper
 from .filter_embedding import filter_papers_by_embedding
+from .full_text import enrich_full_texts
 from .history import NotificationHistory
-from .summarizer import summarize_papers
+from .summarizer import get_default_model, summarize_papers
 from .notifier import send_to_slack
 
 
@@ -139,7 +140,7 @@ def run(
         print(f"      Reason: {result.match_reason}")
 
     # Summarize papers
-    print("\n[4/5] Summarizing papers with Claude...")
+    print(f"\n[4/5] Summarizing papers with Claude ({get_default_model()})...")
     if dry_run and not use_bedrock and not config.anthropic_api_key:
         print("  Skipping summarization (dry run without API key)")
         # Create dummy summaries for dry run
@@ -150,10 +151,12 @@ def run(
                 summary_en="(Dry run: summary not generated)",
                 summary_ja="(ドライラン: 要約は生成されません)",
                 match_reason=r.match_reason,
+                summary_source="abstract",
             )
             for r in filtered
         ]
     else:
+        enrich_full_texts(filtered)
         summarized = summarize_papers(filtered, config.anthropic_api_key)
     print(f"  Summarized {len(summarized)} papers")
 
@@ -166,6 +169,7 @@ def run(
             print(f"  Title: {paper.paper.title}")
             print(f"  URL: {paper.paper.url}")
             print(f"  Match: {paper.match_reason}")
+            print(f"  Summary source: {paper.summary_source}")
             print(f"  Summary (EN): {paper.summary_en[:100]}...")
             print(f"  要約 (JA): {paper.summary_ja[:100]}...")
     else:

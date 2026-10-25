@@ -9,6 +9,42 @@ from slack_sdk.errors import SlackApiError
 from .summarizer import SummarizedPaper
 
 
+SLACK_SECTION_TEXT_LIMIT = 2800
+
+
+def _split_markdown_text(
+    text: str,
+    prefix: str,
+    limit: int = SLACK_SECTION_TEXT_LIMIT,
+) -> list[str]:
+    """Split Markdown text into Slack section-sized chunks."""
+    if len(prefix) + len(text) <= limit:
+        return [f"{prefix}{text}"]
+
+    chunks = []
+    current = prefix
+    for paragraph in text.split("\n\n"):
+        addition = f"{paragraph}\n\n"
+        while addition:
+            remaining = limit - len(current)
+            if len(addition) <= remaining:
+                current += addition
+                break
+
+            if remaining > 0:
+                current += addition[:remaining]
+                addition = addition[remaining:]
+
+            if current.strip():
+                chunks.append(current.rstrip())
+            current = ""
+
+    if current.strip():
+        chunks.append(current.rstrip())
+
+    return chunks
+
+
 class SlackNotifier:
     """Send paper notifications to Slack."""
 
@@ -51,7 +87,10 @@ class SlackNotifier:
                 "elements": [
                     {
                         "type": "mrkdwn",
-                        "text": f"📚 {paper.paper.journal} | 👤 {authors_str}",
+                        "text": (
+                            f"📚 {paper.paper.journal} | 👤 {authors_str} | "
+                            f"Source: {paper.summary_source}"
+                        ),
                     },
                 ],
             },
@@ -62,25 +101,33 @@ class SlackNotifier:
                     "text": f"🔍 *マッチ理由:* {paper.match_reason}",
                 },
             },
+        ]
+        blocks_en.extend(
             {
                 "type": "section",
-                "text": {
-                    "type": "mrkdwn",
-                    "text": f"📝 *Summary (EN):*\n{paper.summary_en}",
-                },
-            },
-        ]
+                "text": {"type": "mrkdwn", "text": chunk},
+            }
+            for chunk in _split_markdown_text(
+                paper.summary_en,
+                "📝 *Summary (EN):*\n",
+            )
+        )
 
         # Japanese summary blocks
         blocks_ja = [
+            *(
+                {
+                    "type": "section",
+                    "text": {"type": "mrkdwn", "text": chunk},
+                }
+                for chunk in _split_markdown_text(
+                    paper.summary_ja,
+                    "📝 *要約 (JA):*\n",
+                )
+            ),
             {
-                "type": "section",
-                "text": {
-                    "type": "mrkdwn",
-                    "text": f"📝 *要約 (JA):*\n{paper.summary_ja}",
-                },
+                "type": "divider",
             },
-            {"type": "divider"},
         ]
 
         return blocks_en, blocks_ja

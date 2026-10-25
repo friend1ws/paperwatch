@@ -110,6 +110,13 @@ class BioRxivFetcher:
             abstract = item.get("abstract", "")
             pub_date = item.get("date", "")
             category = item.get("category", "")
+            version = str(item.get("version", "") or "") or None
+            jats_xml_path = (
+                item.get("jatsxml")
+                or item.get("jats_xml")
+                or item.get("jats_xml_path")
+                or item.get("jats xml path")
+            )
 
             # Parse authors (format: "Author1, Author2, Author3")
             authors = [a.strip() for a in authors_str.split(";") if a.strip()]
@@ -126,6 +133,8 @@ class BioRxivFetcher:
                 pub_date=pub_date,
                 doi=doi,
                 source=server,
+                version=version,
+                jats_xml_path=jats_xml_path,
             )
         except Exception as e:
             print(f"Error parsing preprint: {e}")

@@ -11,8 +11,24 @@ from .filter import FilterResult
 
 
 # Default models for each backend
-DEFAULT_MODEL_DIRECT = "claude-opus-4-5-20251101"
-DEFAULT_MODEL_BEDROCK = "global.anthropic.claude-opus-4-5-20251101-v1:0"
+DEFAULT_MODEL_DIRECT = "claude-opus-5-5"
+DEFAULT_MODEL_BEDROCK = "global.anthropic.claude-opus-5-5"  # inference profile required
+
+# Fallback models used when the default model declines (stop_reason == "refusal")
+FALLBACK_MODEL_DIRECT = "claude-opus-4-8"
+FALLBACK_MODEL_BEDROCK = "global.anthropic.claude-opus-4-8"
+
+
+def get_default_model() -> str:
+    """Return the default model for the configured backend."""
+    use_bedrock = os.environ.get("USE_BEDROCK", "").lower() in ("1", "true", "yes")
+    return DEFAULT_MODEL_BEDROCK if use_bedrock else DEFAULT_MODEL_DIRECT
+
+
+def get_fallback_model() -> str:
+    """Return the refusal fallback model for the configured backend."""
+    use_bedrock = os.environ.get("USE_BEDROCK", "").lower() in ("1", "true", "yes")
+    return FALLBACK_MODEL_BEDROCK if use_bedrock else FALLBACK_MODEL_DIRECT
 
 
 def create_client(api_key: Optional[str] = None) -> tuple[anthropic.Anthropic, str]:
@@ -27,9 +43,9 @@ def create_client(api_key: Optional[str] = None) -> tuple[anthropic.Anthropic, s
     use_bedrock = os.environ.get("USE_BEDROCK", "").lower() in ("1", "true", "yes")
 
     if use_bedrock:
-        return anthropic.AnthropicBedrock(), DEFAULT_MODEL_BEDROCK
+        return anthropic.AnthropicBedrock(), get_default_model()
     else:
-        return anthropic.Anthropic(api_key=api_key), DEFAULT_MODEL_DIRECT
+        return anthropic.Anthropic(api_key=api_key), get_default_model()
 
 
 @dataclass
@@ -39,6 +55,7 @@ class SummarizedPaper:
     summary_en: str
     summary_ja: str
     match_reason: str
+    summary_source: str = "abstract"
 
 
 class PaperSummarizer:
@@ -95,6 +112,56 @@ Claudeによる簡潔な分析：
 
 専門用語は適切に日本語に訳すか、英語のまま残してください。"""
 
+    FULL_TEXT_SYSTEM_PROMPT = """You are an expert scientific reviewer reading extracted full text from an academic paper.
+For each paper, provide analysis in BOTH English and Japanese, clearly separated by the marker "---JAPANESE---".
+
+IMPORTANT: The full-text review should be substantially more detailed than an abstract summary. Aim for about 8000 characters total across English and Japanese, with a short English section and a much more detailed Japanese section. Be evidence-focused and do not invent details not present in the provided text.
+
+The input may come from PDF text extraction and may be noisy or truncated. Prefer concrete claims supported by the text. If the full text excerpt is truncated or a detail is missing, do not pretend it was available.
+
+First, write the English review, then write "---JAPANESE---" on its own line, then write the Japanese review.
+
+=== ENGLISH SECTION (about 1200-1600 characters) ===
+
+## Bottom Line
+State the main contribution and why it matters in 2-3 sentences.
+
+## Evidence Snapshot
+Summarize the study design, datasets, experiments, and 3-5 key results. Include important numbers when available.
+
+## Assessment
+Briefly explain what is interesting, likely impact, main caveats, and if this is a bioRxiv/medRxiv preprint, what journal tier it might plausibly fit and why.
+
+---JAPANESE---
+
+=== 日本語セクション (約6000-7000文字) ===
+
+## 1. この論文の要点
+この論文が何を主張しているのか、何が新しいのか、なぜ読む価値があるのかを最初に明確に書いてください。
+
+## 2. 何をした論文か
+研究デザイン、データ、実験、計算手法、コホート、サンプル、ベンチマーク、比較対象を具体的に説明してください。本文にある重要な数値、条件、データ規模、検証方法があれば必ず含めてください。
+
+## 3. どこが面白いか
+この論文の科学的に面白い点、技術的にうまい点、発想の良い点、既存研究との差分を深掘りしてください。単なる宣伝ではなく、本文中の結果や設計に基づいて評価してください。
+
+## 4. 主要な結果と根拠
+本文に基づく主要な結果を、具体的な根拠とともに整理してください。効果量、性能差、統計値、図表で示された結果、再現性検証、外部データでの確認などがあれば優先してください。
+
+## 5. どのくらいインパクトがありそうか
+分野内での重要度、応用可能性、後続研究への波及、既存の見方を変える可能性を評価してください。インパクトを「高い・中程度・限定的」などで明示し、その理由を本文に基づいて説明してください。
+
+## 6. bioRxiv/medRxivの場合、どのくらいのジャーナルに通りそうか
+この入力がbioRxiv/medRxiv由来のpreprintである場合、本文から見える完成度、データ量、検証の厚み、新規性、ストーリーの強さ、限界を踏まえて、どの程度のジャーナル帯に通りそうかを推定してください。例: top-tier general journal, high-impact field journal, solid specialist journal, methods/resource journal, additional validation needed など。断定せず、理由と条件付きで書いてください。bioRxiv/medRxivでない場合は、この項目は短く「該当なし」としてください。
+
+## 7. 弱点・注意点
+本文から読み取れる限界、仮定、欠けている対照、データ制約、解釈上のリスク、査読で突かれそうな点を具体的に書いてください。
+
+## 8. 自分なら次に何を見るか
+この論文を本当に信じるために追加で見たい解析・実験・データ、また次に追うべき研究展開を挙げてください。
+
+専門用語は適切に日本語に訳すか、英語のまま残してください。"""
+
     def __init__(self, api_key: Optional[str] = None, model: Optional[str] = None):
         """Initialize summarizer.
 
@@ -114,7 +181,18 @@ Claudeによる簡潔な分析：
         Returns:
             Tuple of (English summary, Japanese summary).
         """
-        user_prompt = f"""Please summarize the following paper in both English and Japanese.
+        source_label = paper.full_text_source if paper.full_text else "abstract"
+        source_heading = "Full text excerpt" if paper.full_text else "Abstract"
+        source_text = paper.full_text if paper.full_text else paper.abstract
+        system_prompt = self.FULL_TEXT_SYSTEM_PROMPT if paper.full_text else self.SYSTEM_PROMPT
+
+        task_intro = (
+            "Please review the following paper using the extracted full text."
+            if paper.full_text
+            else "Please summarize the following paper in both English and Japanese."
+        )
+
+        user_prompt = f"""{task_intro}
 
 Title: {paper.title}
 
@@ -122,19 +200,42 @@ Authors: {', '.join(paper.authors[:5])}{'...' if len(paper.authors) > 5 else ''}
 
 Journal: {paper.journal}
 
-Abstract:
-{paper.abstract}"""
+Summary source: {source_label}
+
+{source_heading}:
+{source_text}"""
+
+        # Opus 5.5 always thinks, and thinking tokens count toward max_tokens
+        max_tokens = 24000 if paper.full_text else 16000
 
         message = self.client.messages.create(
             model=self.model,
-            max_tokens=5000,
-            system=self.SYSTEM_PROMPT,
+            max_tokens=max_tokens,
+            system=system_prompt,
             messages=[
                 {"role": "user", "content": user_prompt}
             ],
+            # Opus 5.5 defaults to "medium"; set explicitly
+            extra_body={"output_config": {"effort": "medium"}},
         )
 
-        full_response = message.content[0].text
+        if message.stop_reason == "refusal":
+            # Safety classifiers (e.g. "bio") may decline; retry on the previous model
+            fallback_model = get_fallback_model()
+            print(f"  Refused by {self.model}; retrying with {fallback_model}")
+            message = self.client.messages.create(
+                model=fallback_model,
+                max_tokens=max_tokens,
+                system=system_prompt,
+                messages=[
+                    {"role": "user", "content": user_prompt}
+                ],
+            )
+
+        # Response may start with a thinking block; collect text blocks only
+        full_response = "".join(
+            block.text for block in message.content if block.type == "text"
+        )
 
         # Split response into English and Japanese parts
         if "---JAPANESE---" in full_response:
@@ -171,6 +272,7 @@ Abstract:
                         summary_en=summary_en,
                         summary_ja=summary_ja,
                         match_reason=result.match_reason,
+                        summary_source=result.paper.full_text_source or "abstract",
                     )
                 )
             except Exception as e:
@@ -182,6 +284,7 @@ Abstract:
                         summary_en="(Failed to generate summary)",
                         summary_ja="(要約の生成に失敗しました)",
                         match_reason=result.match_reason,
+                        summary_source=result.paper.full_text_source or "abstract",
                     )
                 )
 

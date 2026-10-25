@@ -20,6 +20,10 @@ class Paper:
     pub_date: str
     doi: Optional[str] = None
     source: str = "pubmed"
+    version: Optional[str] = None
+    jats_xml_path: Optional[str] = None
+    full_text: Optional[str] = None
+    full_text_source: Optional[str] = None
 
     @property
     def url(self) -> str:
